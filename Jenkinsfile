@@ -34,4 +34,5 @@ pipeline {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
             }
         }
+    }
 }
