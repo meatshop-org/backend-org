@@ -34,11 +34,10 @@ pipeline {
                 stage('OWASP Dependency Check'){
                     steps {
                        dependencyCheck additionalArguments: '''
-                        --scan	\'./requirements.txt\'
+                        --scan	\'./\'
                         --out \'./\'
                         --format \'ALL\'
                         --disableYarnAudit \
-                        --enableExperimental \
                         --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
         
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
