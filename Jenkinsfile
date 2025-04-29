@@ -17,7 +17,7 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
-                    pip-audit > pip-audit-audit.txt
+                    pip-audit > pip-audit-report.txt
                 '''
 
                 script {
