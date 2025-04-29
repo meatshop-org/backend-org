@@ -17,6 +17,7 @@ pipeline {
                 stage('Audit Dependencies') {
                     steps {
                         sh '''
+                            echo "Hello"
                             . venv/bin/activate
                             pip-audit > pip-audit-report.txt
                         '''
