@@ -28,11 +28,10 @@ pipeline {
                 }
             }
         }
-
-        post {
+    }
+    post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
             }
         }
-    }
 }
