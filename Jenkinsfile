@@ -34,7 +34,7 @@ pipeline {
                 stage('OWASP Dependency Check'){
                     steps {
                        dependencyCheck additionalArguments: '''
-                        --scan	\'./\'
+                        --scan	\'requirements.txt\'
                         --out \'./\'
                         --format \'ALL\'
                         --disableYarnAudit \
