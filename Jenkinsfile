@@ -36,7 +36,7 @@ pipeline {
                     steps {
                        sh '''
                            . venv/bin/activate
-                           safety check --json > safety-report.json
+                           safety scan --output html > safety-report.html
                        '''
                     }
                 }
@@ -47,7 +47,7 @@ pipeline {
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
-                archiveArtifacts allowEmptyArchive: true, artifacts: 'safety-report.json', followSymlinks: false
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'safety-report.html', followSymlinks: false
             }
         }
 }
