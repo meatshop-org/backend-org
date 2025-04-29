@@ -3,7 +3,11 @@ pipeline {
     stages {
         stage('Installing Dependencies') {
             steps {
-                sh 'pipenv install'
+                
+                sh '''
+                    export PATH="$HOME/.local/bin:$PATH"
+                    pipenv install 
+                '''
             }
         }
     }
