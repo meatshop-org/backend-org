@@ -9,6 +9,7 @@ pipeline {
                     python -m pip install --upgrade pip
                     pip install -r requirements.txt
                     python3.11 -m pip install pip-audit
+                    python3.11 -m pip install safety
                 '''
             }
         }
@@ -31,17 +32,12 @@ pipeline {
                     }
                 }
                 
-                stage('OWASP Dependency Check'){
+                stage('Python Safety Check'){
                     steps {
-                       dependencyCheck additionalArguments: '''
-                        --scan	\'./meatshop\'
-                        --out \'./\'
-                        --format \'ALL\'
-                        --disableYarnAudit \
-                         --enableExperimental \
-                        --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
-        
-                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
+                       sh '''
+                           . venv/bin/activate
+                           safety check --json > safety-report.json
+                       '''
                     }
                 }
             }
@@ -51,6 +47,7 @@ pipeline {
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'safety-report.json', followSymlinks: false
             }
         }
 }
