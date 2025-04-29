@@ -15,6 +15,7 @@ pipeline {
         stage('Audit Dependencies') {
             steps {
                 sh '''
+                    python3.11 -m venv venv
                     . venv/bin/activate
                     pip-audit
                 '''
