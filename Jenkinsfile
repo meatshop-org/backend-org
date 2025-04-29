@@ -17,8 +17,21 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
-                    pip-audit
+                    pip-audit > pip-audit-audit.txt
                 '''
+
+                script {
+                    def auditReport = readFile('pip-audit-report.txt')
+                    if (auditReport.contains('Found')) {
+                        error 'Found vulnerabilities in dependencies!'
+                    }
+                }
+            }
+        }
+
+        post {
+            always {
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
             }
         }
     }
