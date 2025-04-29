@@ -12,22 +12,39 @@ pipeline {
                 '''
             }
         }
-
-        stage('Audit Dependencies') {
-            steps {
-                sh '''
-                    . venv/bin/activate
-                    pip-audit > pip-audit-report.txt
-                '''
-
-                script {
-                    def auditReport = readFile('pip-audit-report.txt')
-                    if (auditReport.contains('Found')) {
-                        error 'Found vulnerabilities in dependencies!'
+        stage('Dependencies Scanning...'){
+            parallel {
+                stage('Audit Dependencies') {
+                    steps {
+                        sh '''
+                            . venv/bin/activate
+                            pip-audit > pip-audit-report.txt
+                        '''
+        
+                        script {
+                            def auditReport = readFile('pip-audit-report.txt')
+                            if (auditReport.contains('Found')) {
+                                error 'Found vulnerabilities in dependencies!'
+                            }
+                        }
+                    }
+                }
+                
+                stage('OWASP Dependency Check'){
+                    steps {
+                       dependencyCheck additionalArguments: '''
+                        --scan	\'./\'
+                        --out \'./\'
+                        --format \'ALL\'
+                        --disableYarnAudit \
+                        --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
+        
+                        dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                     }
                 }
             }
         }
+
     }
     post {
             always {
