@@ -8,6 +8,7 @@ pipeline {
                     . venv/bin/activate
                     python -m pip install --upgrade pip
                     pip install -r requirements.txt
+                    python3.11 -m pip install pip-audit
                 '''
             }
         }
@@ -15,7 +16,6 @@ pipeline {
         stage('Audit Dependencies') {
             steps {
                 sh '''
-                    python3.11 -m venv venv
                     . venv/bin/activate
                     pip-audit
                 '''
