@@ -11,5 +11,14 @@ pipeline {
                 '''
             }
         }
+
+        stage('Audit Dependencies') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    pip-audit
+                '''
+            }
+        }
     }
 }
