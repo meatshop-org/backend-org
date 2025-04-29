@@ -1,10 +1,9 @@
 pipeline {
     agent any
     stages {
-        stage('Test') {
+        stage('Installing Dependencies') {
             steps {
-                sh 'pip --version'
-                
+                sh 'pipenv install'
             }
         }
     }
