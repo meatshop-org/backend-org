@@ -42,7 +42,7 @@ pipeline {
                             . venv/bin/activate
                             find . -name "db.sqlite3" -delete
                             safety scan --help
-                            echo "y" | safety --key \$SAFETY_API_KEY scan --target core --assume-yes
+                            echo "y" | safety --key \$SAFETY_API_KEY scan --target core --output html --output-file safety_report.html
                     """
                     }
                 }
@@ -53,7 +53,14 @@ pipeline {
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
-                // archiveArtifacts allowEmptyArchive: true, artifacts: 'output.html', followSymlinks: false
+                publishHTML target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'safety_report.html',
+                reportName: 'Safety Vulnerability Report'
+            ]
             }
         }
 }
