@@ -39,27 +39,21 @@ pipeline {
                 
                 stage('Python Safety Check'){
                     steps {
-                       sh """
+                      sh """
                             . venv/bin/activate
                         
-                            # Generate default policy
                             safety generate policy_file
                         
-                            # Replace include-files: [] with specific list
-                            awk '
-                            /include-files: \[\]/ {
+                            awk '/include-files: \\[\\]/ {
                                 print "  include-files:";
                                 print "    - path: requirements.txt";
                                 print "    - path: Pipfile.lock";
                                 next
                             }
-                            { print }
-                            ' .safety-policy.yml > tmp && mv tmp .safety-policy.yml
-
+                            { print }' .safety-policy.yml > tmp && mv tmp .safety-policy.yml
                         
-                            # Run scan with modified policy
                             safety --key \$SAFETY_API_KEY scan --policy .safety-policy.yml
-                        """
+                    """
                     }
                 }
             }
