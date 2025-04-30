@@ -40,11 +40,11 @@ pipeline {
         }
         stage('SAST - SonarQube') {
             steps {
-                    withSonarQubeEnv('sonar-qube-server') {
+                    withSonarQubeEnv('sonar-qube-backend-server') {
                         sh '''
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
-                               -Dsonar.projectKey=backend-project \
-                               -Dsonar.sources=./ \
+                              -Dsonar.projectKey=backend-project \
+                              -Dsonar.sources=. \
                          '''
                     }
             }
