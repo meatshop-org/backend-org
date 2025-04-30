@@ -34,7 +34,8 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                  sh ''' 
-                     python manage.py test --no-input --parallel --failfast
+                     . venv/bin/activate
+                     python3.11 manage.py test --no-input --parallel --failfast
                 '''
             }
         }
