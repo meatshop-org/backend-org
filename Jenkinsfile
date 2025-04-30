@@ -39,12 +39,12 @@ pipeline {
                 
                 stage('Python Safety Check'){
                     steps {
-                       sh '''
+                       sh """
                            . venv/bin/activate
                            safety generate policy_file
                            sed -i 's|include-files: \[\]|include-files:\n    - requirements.txt\n    - Pipfile.lock|' .safety-policy.yml
                            safety --key $SAFETY_API_KEY scan 
-                       '''
+                       """
                     }
                 }
             }
