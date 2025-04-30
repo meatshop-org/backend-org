@@ -45,9 +45,7 @@ pipeline {
                             safety generate policy_file
                         
                             awk '/include-files: \\[\\]/ {
-                                print "  include-files:";
-                                print "    - path: requirements.txt";
-                                print "    - path: Pipfile.lock";
+                                print "  include-files: ["requirements.txt", "Pipfile.lock"]";
                                 next
                             }
                             { print }' .safety-policy.yml > tmp && mv tmp .safety-policy.yml
