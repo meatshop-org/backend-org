@@ -43,8 +43,6 @@ pipeline {
                              find . -name "db.sqlite3" -delete
                              rm -rf media/product-images
                              safety scan --help
-                             mkdir req
-                             mv requirements.txt req/
                              echo "y" | safety --key \$SAFETY_API_KEY scan --target req --output html 
                         '''
                     }
