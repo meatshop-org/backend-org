@@ -65,7 +65,6 @@ pipeline {
                  sh ''' 
 		     sleep 100
                      . venv/bin/activate
-		     converage --version
                      coverage run --source='.' manage.py test --no-input --failfast
                 '''
             }
