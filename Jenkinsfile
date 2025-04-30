@@ -41,6 +41,7 @@ pipeline {
                         sh '''
                             . venv/bin/activate
                              find . -name "db.sqlite3" -delete
+                             rm -rf media/product-images
                              safety scan --help
                              mkdir req
                              mv requirements.txt req/
