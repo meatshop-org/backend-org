@@ -21,22 +21,20 @@ pipeline {
                 '''
             }
         }
-        stage('Dependencies Scanning...'){
-                stage('Audit Dependencies') {
-                    steps {
-                        sh '''
-                            . venv/bin/activate
-                            pip-audit > pip-audit-report.txt
-                        '''
-        
-                        script {
-                            def auditReport = readFile('pip-audit-report.txt')
-                            if (auditReport.contains('Found')) {
-                                error 'Found vulnerabilities in dependencies!'
-                            }
-                        }
+        stage('Audit Dependencies') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    pip-audit > pip-audit-report.txt
+                '''
+
+                script {
+                    def auditReport = readFile('pip-audit-report.txt')
+                    if (auditReport.contains('Found')) {
+                        error 'Found vulnerabilities in dependencies!'
                     }
                 }
+            }
         }
         stage('SAST - SonarQube') {
             steps {
