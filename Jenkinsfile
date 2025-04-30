@@ -40,7 +40,7 @@ pipeline {
                     steps {
                        sh '''
                            . venv/bin/activate
-                           safety --key $SAFETY_API_KEY scan 
+                           safety --key $SAFETY_API_KEY scan --scan-target=requirements.txt
                        '''
                     }
                 }
