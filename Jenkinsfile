@@ -5,6 +5,11 @@ pipeline {
         GITHUB_TOKEN = credentials('github-pat')
         USER_EMAIL = credentials('github-email')
         FGGITHUB_TOKEN = credentials('FGgithub-pat')
+        DB_NAME = credentials('DB_NAME')
+        LOCAL_DB_HOST = credentials('LOCAL_DB_HOST')
+        LOCAL_DB_USER = credentials('LOCAL_DB_USER')
+        LOCAL_DB_PASSWORD = credentials('LOCAL_DB_PASSWORD')
+        DB_PORT = credentials('DB_PORT')
     }
     stages {
         stage('Install Dependencies in venv') {
