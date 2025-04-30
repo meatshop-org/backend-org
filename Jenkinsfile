@@ -6,7 +6,7 @@ pipeline {
         USER_EMAIL = credentials('github-email')
         FGGITHUB_TOKEN = credentials('FGgithub-pat')
         DB_NAME = 'meatshop'
-        LOCAL_DB_HOST = 'http://localhost:3306'
+        LOCAL_DB_HOST = 'localhost'
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
