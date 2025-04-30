@@ -66,6 +66,7 @@ pipeline {
 		     sleep 100
                      . venv/bin/activate
                      coverage run --source='.' manage.py test --no-input --failfast
+		     coverage xml -o coverage.xml
                 '''
             }
         }  
