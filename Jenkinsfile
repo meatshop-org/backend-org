@@ -42,13 +42,7 @@ pipeline {
                        sh '''
                            . venv/bin/activate
                            safety generate policy_file
-                            awk '/exclude: \\[\\]/ {
-                                print;
-                                print "  include-files:";
-                                print "    - requirements.txt";
-                                print "    - Pipfile.lock";
-                                next
-                            }1' .safety-policy.yml > tmp_policy && mv tmp_policy .safety-policy.yml
+                           sed -i 's|include-files: \[\]|include-files:\n    - requirements.txt\n    - Pipfile.lock|' .safety-policy.yml
                            safety --key $SAFETY_API_KEY scan 
                        '''
                     }
