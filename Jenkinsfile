@@ -40,7 +40,7 @@ pipeline {
                     steps {
                        sh '''
                            . venv/bin/activate
-                           safety --key $SAFETY_API_KEY scan --output html > output.html 
+                           safety --key $SAFETY_API_KEY scan 
                        '''
                     }
                 }
@@ -51,7 +51,7 @@ pipeline {
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
-                archiveArtifacts allowEmptyArchive: true, artifacts: 'output.html', followSymlinks: false
+                // archiveArtifacts allowEmptyArchive: true, artifacts: 'output.html', followSymlinks: false
             }
         }
 }
