@@ -38,32 +38,12 @@ pipeline {
                 
                 stage('Python Safety Check'){
                     steps {
-                        script {
-                              sh '''#!/bin/bash
-                                . venv/bin/activate
-                                
-                                # Create safe file list without backslashes
-                                find . -type f \\( -name "*.py" -o -name "requirements.txt" \\) \
-                                    -not -path "./venv/*" \
-                                    -not -path "./media/*" \
-                                    -not -path "./static/*" > python_files.txt
-                                
-                                # Verify each file is text
-                                while IFS= read -r file; do
-                                    if ! file -b --mime-type "$file" | grep -q "text/"; then
-                                        echo "Removing binary file: $file"
-                                        grep -vFx "$file" python_files.txt > temp.txt
-                                        mv temp.txt python_files.txt
-                                    fi
-                                done < python_files.txt
-                                
-                                # Run safety scan
-                                safety --key $SAFETY_API_KEY scan --file-list python_files.txt --output html safety_report.html || true
-                                
-                                # Ensure we always have a report
-                                [ -s safety_report.html ] || echo "<html><body>No vulnerabilities found</body></html>" > safety_report.html
-                            '''
-                        }
+                        sh '''
+                            . venv/bin/activate
+                             find . -name "db.sqlite3" -delete
+                             safety scan --help
+                             echo "y" | safety --key \$SAFETY_API_KEY check --file requirements.txt --output html --output-file safety_report.html
+                        '''
                     }
                 }
             }
