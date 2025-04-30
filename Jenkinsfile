@@ -78,6 +78,7 @@ pipeline {
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
                               -Dsonar.projectKey=backend-project \
                               -Dsonar.sources=. \
+			      -Dsonar.python.coverage.reportPaths=coverage.xml
                          '''
                     }
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
