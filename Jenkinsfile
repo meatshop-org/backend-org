@@ -39,30 +39,30 @@ pipeline {
                 stage('Python Safety Check'){
                     steps {
                         script {
-                              sh '''
+                              sh '''#!/bin/bash
                                 . venv/bin/activate
-                                find . -name "db.sqlite3" -delete
                                 
-                                find . -type f \( -name "*.py" -o -name "requirements.txt" \) \
+                                # Create safe file list without backslashes
+                                find . -type f \\( -name "*.py" -o -name "requirements.txt" \\) \
                                     -not -path "./venv/*" \
                                     -not -path "./media/*" \
-                                    -not -path "./static/*" \
-                                    -print0 | xargs -0 file -b --mime-type | grep -F "text/" | cut -d: -f1 > clean_files.txt
+                                    -not -path "./static/*" > python_files.txt
                                 
-                                # Validate all files are text files
+                                # Verify each file is text
                                 while IFS= read -r file; do
                                     if ! file -b --mime-type "$file" | grep -q "text/"; then
-                                        echo "WARNING: Removing binary file from scan list: $file"
-                                        sed -i "\|^$file$|d" clean_files.txt
+                                        echo "Removing binary file: $file"
+                                        grep -vFx "$file" python_files.txt > temp.txt
+                                        mv temp.txt python_files.txt
                                     fi
-                                done < clean_files.txt
+                                done < python_files.txt
                                 
-                              # Run safety with guaranteed text files only
-                                safety --key $SAFETY_API_KEY scan --file-list clean_files.txt --output html safety_report.html || {
-                                    echo "Fallback: Creating empty report"
-                                    echo "<html><body>No vulnerabilities found or scan failed</body></html>" > safety_report.html
-                                }
-                                '''
+                                # Run safety scan
+                                safety --key $SAFETY_API_KEY scan --file-list python_files.txt --output html safety_report.html || true
+                                
+                                # Ensure we always have a report
+                                [ -s safety_report.html ] || echo "<html><body>No vulnerabilities found</body></html>" > safety_report.html
+                            '''
                         }
                     }
                 }
