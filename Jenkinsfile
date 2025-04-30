@@ -23,23 +23,17 @@ pipeline {
         }
         stage('Audit Dependencies') {
             steps {
-                
                  catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        sh '''
-                            . venv/bin/activate
-                            pip-audit > pip-audit-report.txt
-                        '''
+                    sh '''
+                        . venv/bin/activate
+                        pip-audit > pip-audit-report.txt
+                    '''
                 }
-                // script {
-                //     def auditReport = readFile('pip-audit-report.txt')
-                //     if (auditReport.contains('Found')) {
-                //         error 'Found vulnerabilities in dependencies!'
-                //     }
-                // }
             }
         }
         stage('SAST - SonarQube') {
             steps {
+                timeout(time: 120, unit: 'SECONDS'){
                     withSonarQubeEnv('sonar-qube-backend-server') {
                         sh '''
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
@@ -47,6 +41,10 @@ pipeline {
                               -Dsonar.sources=. \
                          '''
                     }
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
             }
         }
 
