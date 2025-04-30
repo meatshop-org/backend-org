@@ -23,6 +23,7 @@ pipeline {
                     python3.11 -m pip install safety
                     python3.11 -m pip install safety auth
                     python3.11 -m pip install yq
+                    python3.11 -m pip install coverage
                 '''
             }
         }
@@ -59,6 +60,16 @@ pipeline {
                 '''
             }
         }
+        stage('Code Coverage') {
+            steps {
+                 sh ''' 
+		     sleep 100
+                     . venv/bin/activate
+		     converage --version
+                     coverage run --source='.' manage.py test --no-input --failfast
+                '''
+            }
+        }  
         stage('SAST - SonarQube') {
             steps {
                 timeout(time: 540, unit: 'SECONDS'){
