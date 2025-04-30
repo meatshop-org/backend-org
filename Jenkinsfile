@@ -54,7 +54,7 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                  sh ''' 
-		     sleep 100
+		     sleep 60
                      . venv/bin/activate
                      python3.11 manage.py test --no-input --failfast
                 '''
@@ -63,7 +63,7 @@ pipeline {
         stage('Code Coverage') {
             steps {
                  sh ''' 
-		     sleep 100
+		     sleep 60
                      . venv/bin/activate
                      coverage run --source='.' manage.py test --no-input --failfast
 		     coverage xml -o coverage.xml
