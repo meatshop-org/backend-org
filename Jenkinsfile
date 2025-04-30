@@ -41,6 +41,8 @@ pipeline {
                       sh """
                             . venv/bin/activate
                             find . -name "db.sqlite3" -delete
+                            find . -type f -not -path "./venv/*" -not -path "./media/*" -name "*.py"
+                            safety scan --dry-run --debug
                             safety scan --help
                             echo "y" | safety --key \$SAFETY_API_KEY scan --exclude="media/product-images/,venv/" --output html --output-file safety_report.html
                     """
