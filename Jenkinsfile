@@ -41,6 +41,7 @@ pipeline {
                     steps {
                       sh """
                             . venv/bin/activate
+                            find . -name "*.pyc" -delete
                             safety --key \$SAFETY_API_KEY --debug scan 
                     """
                     }
