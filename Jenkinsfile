@@ -42,7 +42,7 @@ pipeline {
                             . venv/bin/activate
                             find . -name "db.sqlite3" -delete
                             safety scan --help
-                            echo "y" | safety --key \$SAFETY_API_KEY scan --exclude="*.jpg,*.png,*.pdf,*.bin,*.pyc" --output html --output-file safety_report.html
+                            echo "y" | safety --key \$SAFETY_API_KEY scan --exclude="media/product-images/,venv/" --output html --output-file safety_report.html
                     """
                     }
                 }
