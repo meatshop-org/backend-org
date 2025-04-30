@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    environment {
-        SAFETY_API_KEY = credentials('SAFETY_API_KEY')
-    }
     stages {
         stage('Install Dependencies in venv') {
             steps {
@@ -19,7 +16,6 @@ pipeline {
             }
         }
         stage('Dependencies Scanning...'){
-            parallel {
                 stage('Audit Dependencies') {
                     steps {
                         sh '''
@@ -35,33 +31,12 @@ pipeline {
                         }
                     }
                 }
-                
-                stage('Python Safety Check'){
-                    steps {
-                        sh '''
-                            . venv/bin/activate
-                             find . -name "db.sqlite3" -delete
-                             rm -rf media/product-images
-                             safety scan --help
-                             echo "y" | safety --key \$SAFETY_API_KEY scan --target req --output html 
-                        '''
-                    }
-                }
-            }
         }
 
     }
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
-                publishHTML target: [
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: '.',
-                reportFiles: 'safety_report.html',
-                reportName: 'Safety Vulnerability Report'
-            ]
             }
         }
 }
