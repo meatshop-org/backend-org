@@ -31,6 +31,13 @@ pipeline {
                 }
             }
         }
+        stage('Run Unit Tests') {
+            steps {
+                 sh ''' 
+                     python manage.py test --no-input --parallel --failfast
+                '''
+            }
+        }
         stage('SAST - SonarQube') {
             steps {
                 timeout(time: 540, unit: 'SECONDS'){
