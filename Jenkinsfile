@@ -40,6 +40,7 @@ pipeline {
                     steps {
                        sh '''
                            . venv/bin/activate
+                           safety generate policy_file
                            safety --key $SAFETY_API_KEY scan --exclude db.sqlite3
                        '''
                     }
