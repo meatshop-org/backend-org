@@ -41,7 +41,8 @@ pipeline {
                        sh '''
                            . venv/bin/activate
                            safety generate policy_file
-                           safety --key $SAFETY_API_KEY scan --exclude db.sqlite3
+                           yq eval '.scanning-settings.include-files = ["requirements.txt", "Pipfile.lock"]' -i .safety-policy.yml
+                           safety --key $SAFETY_API_KEY scan 
                        '''
                     }
                 }
