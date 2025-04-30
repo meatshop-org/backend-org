@@ -42,7 +42,7 @@ pipeline {
                             . venv/bin/activate
                             find . -name "db.sqlite3" -delete
                             safety scan --help
-                            echo "y" | safety --key \$SAFETY_API_KEY scan --target core --output html --output-file safety_report.html
+                            echo "y" | safety --key \$SAFETY_API_KEY scan --output html --output-file safety_report.html
                     """
                     }
                 }
