@@ -46,7 +46,16 @@ pipeline {
                             safety generate policy_file
                         
                             # Replace include-files: [] with specific list
-                            sed -i 's|include-files: \\[\\]|include-files:\\n    - requirements.txt\\n    - Pipfile.lock|' .safety-policy.yml
+                            awk '
+                            /include-files: \[\]/ {
+                                print "  include-files:";
+                                print "    - path: requirements.txt";
+                                print "    - path: Pipfile.lock";
+                                next
+                            }
+                            { print }
+                            ' .safety-policy.yml > tmp && mv tmp .safety-policy.yml
+
                         
                             # Run scan with modified policy
                             safety --key \$SAFETY_API_KEY scan --policy .safety-policy.yml
