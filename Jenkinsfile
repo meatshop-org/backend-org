@@ -23,7 +23,6 @@ pipeline {
                 stage('Audit Dependencies') {
                     steps {
                         sh '''
-                            echo "Hello"
                             . venv/bin/activate
                             pip-audit > pip-audit-report.txt
                         '''
@@ -41,7 +40,7 @@ pipeline {
                     steps {
                       sh """
                             . venv/bin/activate
-                            find . -name "*.pyc" -delete
+                            find . -name "db.sqlite3" -delete
                             safety --key \$SAFETY_API_KEY --debug scan 
                     """
                     }
