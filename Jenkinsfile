@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        SAFETY_API_KEY = credentials('SAFETY_API_KEY')
+    }
     stages {
         stage('Install Dependencies in venv') {
             steps {
@@ -10,6 +13,7 @@ pipeline {
                     pip install -r requirements.txt
                     python3.11 -m pip install pip-audit
                     python3.11 -m pip install safety
+                    python3.11 -m pip install safety auth
                 '''
             }
         }
@@ -36,7 +40,7 @@ pipeline {
                     steps {
                        sh '''
                            . venv/bin/activate
-                           safety scan 
+                           safety --key $SAFETY_API_KEY scan --output html > output.html 
                        '''
                     }
                 }
@@ -47,7 +51,7 @@ pipeline {
     post {
             always {
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
-                // archiveArtifacts allowEmptyArchive: true, artifacts: 'output.html', followSymlinks: false
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'output.html', followSymlinks: false
             }
         }
 }
