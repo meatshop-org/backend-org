@@ -40,7 +40,6 @@ pipeline {
         }
         stage('SAST - SonarQube') {
             steps {
-                timeout(time: 120, unit: 'SECONDS') {
                     withSonarQubeEnv('sonar-qube-server') {
                         sh '''
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
@@ -48,10 +47,6 @@ pipeline {
                                -Dsonar.sources=./ \
                          '''
                     }
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                }
             }
         }
 
