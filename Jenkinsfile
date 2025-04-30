@@ -42,7 +42,13 @@ pipeline {
                        sh '''
                            . venv/bin/activate
                            safety generate policy_file
-                           yq eval '.scanning-settings.include-files = ["requirements.txt", "Pipfile.lock"]' -i .safety-policy.yml
+                           awk '/exclude: \\[\\]/ {
+                                print;
+                                print "  include-files:";
+                                print "    - requirements.txt";
+                                print "    - Pipfile.lock";
+                                next
+                            }1' .safety-policy.yml > temp && mv temp .safety-policy.yml
                            safety --key $SAFETY_API_KEY scan 
                        '''
                     }
