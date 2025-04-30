@@ -5,11 +5,11 @@ pipeline {
         GITHUB_TOKEN = credentials('github-pat')
         USER_EMAIL = credentials('github-email')
         FGGITHUB_TOKEN = credentials('FGgithub-pat')
-        DB_NAME = credentials('DB_NAME')
-        LOCAL_DB_HOST = credentials('LOCAL_DB_HOST')
-        LOCAL_DB_USER = credentials('LOCAL_DB_USER')
-        LOCAL_DB_PASSWORD = credentials('LOCAL_DB_PASSWORD')
-        DB_PORT = credentials('DB_PORT')
+        DB_NAME = 'meatshop'
+        LOCAL_DB_HOST = 'http://http://192.168.127.131:3306/'
+        LOCAL_DB_USER = 'root'
+        LOCAL_DB_PASSWORD = 'mypass'
+        DB_PORT = '3306'
     }
     stages {
         stage('Install Dependencies in venv') {
