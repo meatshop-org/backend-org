@@ -41,7 +41,7 @@ pipeline {
                     steps {
                       sh """
                             . venv/bin/activate
-                            safety --key \$SAFETY_API_KEY --debug --target /requirements.txt scan 
+                            safety --key \$SAFETY_API_KEY --debug scan 
                     """
                     }
                 }
