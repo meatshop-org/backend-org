@@ -41,16 +41,7 @@ pipeline {
                     steps {
                       sh """
                             . venv/bin/activate
-                        
-                            safety generate policy_file
-                        
-                            awk '/include-files: \\[\\]/ {
-                                print "  include-files: ["requirements.txt", "Pipfile.lock"]";
-                                next
-                            }
-                            { print }' .safety-policy.yml > tmp && mv tmp .safety-policy.yml
-                        
-                            safety --key \$SAFETY_API_KEY scan --policy .safety-policy.yml
+                            safety --key \$SAFETY_API_KEY --debug --target /requirements.txt scan 
                     """
                     }
                 }
