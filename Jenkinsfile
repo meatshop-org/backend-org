@@ -31,6 +31,19 @@ pipeline {
                 }
             }
         }
+        stage('Run DB') {
+            steps {
+                 sh ''' 
+                     docker run -d \
+                          --name mymysql \
+                          -e MYSQL_ROOT_PASSWORD=mypass \
+                          -e MYSQL_DATABASE=meatshop \
+                          -p 3306:3306 \
+                          -v mysql_data:/var/lib/mysql \
+                          mysql
+                '''
+            }
+        }
         stage('Run Unit Tests') {
             steps {
                  sh ''' 
