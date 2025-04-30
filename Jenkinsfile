@@ -77,7 +77,7 @@ pipeline {
                         sh '''
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
                               -Dsonar.projectKey=backend-project \
-                              -Dsonar.sources=. \
+                              -Dsonar.sources=tags/,shop/,meatshop/,likes/,core/ \
 			      -Dsonar.python.coverage.reportPaths=coverage.xml
                          '''
                     }
