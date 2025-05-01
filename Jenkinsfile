@@ -100,9 +100,9 @@ pipeline {
                         docker run -d \
                             -e DB_NAME=${DB_NAME} \
                             -e DB_PORT=${DB_PORT} \
-                            -e LOCAL_DB_HOST=${LOCAL_DB_HOST} \ 
+                            -e LOCAL_DB_HOST=${LOCAL_DB_HOST} \
                             -e LOCAL_DB_USER=${LOCAL_DB_USER} \
-                            -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \ 
+                            -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
                             -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
                     '''
                 }
