@@ -90,6 +90,16 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
+                script {
+                    sh '''
+                        if docker ps -a | grep -q "backend"; then
+                            echo "Container Found, Stopping..."
+                            docker stop "backend" && docker rm "backend"
+                            echo "Container stopped and removed"
+                        fi
+                        docker run -d -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
+                    '''
+                }
             }
         }
 

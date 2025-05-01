@@ -1,12 +1,21 @@
-.env
+# Ignore everything by default
 **
+
+# Whitelist only what's needed
 !core/
 !likes/
 !shop/
 !meatshop/
 !tags/
-!db.sqlite3
 !manage.py
 !Pipfile
 !Pipfile.lock
 !requirements.txt
+!Dockerfile
+!.dockerignore
+
+# Ignore secrets and dev files
+.env
+*.log
+__pycache__/
+*.pyc
