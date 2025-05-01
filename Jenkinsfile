@@ -41,7 +41,6 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        echo Hello
                         if docker ps -a | grep -q "mymysql"; then
                             echo "Container Found, Stopping..."
                             docker stop "mymysql" && docker rm "mymysql"
@@ -180,6 +179,15 @@ pipeline {
                     sshagent(['aws-dev-deploy-ec2-instance']) {
                         sh '''
                             ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 "
+                                sudo docker network create meatshop-net
+                                sudo docker rm -f $(sudo docker ps -q)
+                                if docker ps -a | grep -q "mymysql"; then
+                                    echo "Container Found, Stopping..."
+                                    docker stop "mymysql" && docker rm "mymysql"
+                                    echo "Container stopped and removed"
+                                fi
+                                docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
+
                                 if sudo docker ps -a | grep -q "backend"; then
                                     echo "Container Found, Stopping..."
                                     sudo docker stop "backend" && sudo docker rm "backend"
@@ -192,13 +200,7 @@ pipeline {
                                     -e LOCAL_DB_HOST=mymysql \
                                     -e LOCAL_DB_USER=${LOCAL_DB_USER} \
                                     -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
-                                    -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
-                                if sudo docker ps -a | grep -q "meatshop-backend"; then
-                                    echo "Container Found, Stopping..."
-                                    sudo docker stop "meatshop-backend" && sudo docker rm "meatshop-backend"
-                                    echo "Container stopped and removed"
-                                fi
-                                sudo docker run --name meatshop-backend -p 80:80 -d borhom11/meatshop-backend:$GIT_COMMIT
+                                    -p 80:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
                             "
                         '''
                     }
