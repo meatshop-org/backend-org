@@ -90,40 +90,42 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
-                script {
-                    sh '''
-                        if docker ps -a | grep -q "backend"; then
-                            echo "Container Found, Stopping..."
-                            docker stop "backend" && docker rm "backend"
-                            echo "Container stopped and removed"
-                        fi
-                        docker run -d \
-                            --network meatshop-net \
-                            -e DB_NAME=${DB_NAME} \
-                            -e DB_PORT=${DB_PORT} \
-                            -e LOCAL_DB_HOST=mymysql \
-                            -e LOCAL_DB_USER=${LOCAL_DB_USER} \
-                            -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
-                            -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
-                    '''
-                }
+                // script {
+                //     sh '''
+                //         if docker ps -a | grep -q "backend"; then
+                //             echo "Container Found, Stopping..."
+                //             docker stop "backend" && docker rm "backend"
+                //             echo "Container stopped and removed"
+                //         fi
+                //         docker run -d \
+                //             --network meatshop-net \
+                //             -e DB_NAME=${DB_NAME} \
+                //             -e DB_PORT=${DB_PORT} \
+                //             -e LOCAL_DB_HOST=mymysql \
+                //             -e LOCAL_DB_USER=${LOCAL_DB_USER} \
+                //             -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
+                //             -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
+                //     '''
+                // }
             }
         }
         stage('Trivy Vulnarability Scanner'){
             steps {
-                sh '''
-                    trivy image borhom11/meatshop-backend:$GIT_COMMIT \
-                        --severity LOW,MEDIUM \
-                        --exit-code 0 \
-                        --quiet \
-                        --format json -o trivy-image-MEDIUM-results.json
-    
-                     trivy image borhom11/meatshop-backend:$GIT_COMMIT \
-                        --severity HIGH,CRITICAL \
-                        --exit-code 1 \
-                        --quiet \
-                        --format json -o trivy-image-CRITICAL-results.json
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh '''
+                        trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+                            --severity LOW,MEDIUM \
+                            --exit-code 0 \
+                            --quiet \
+                            --format json -o trivy-image-MEDIUM-results.json
+        
+                        trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 1 \
+                            --quiet \
+                            --format json -o trivy-image-CRITICAL-results.json
+                    '''
+                }
             }
             post {
                 always {
@@ -146,6 +148,13 @@ pipeline {
                     '''
                 }
             }
+        }
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry(url: 'https://index.docker.io/v1/', credentialsId: 'docker-hub-creds') {
+                    sh 'docker push borhom11/meatshop-backend:$GIT_COMMIT'
+                }
+            }   
         }
 
     }
