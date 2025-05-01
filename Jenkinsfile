@@ -10,6 +10,7 @@ pipeline {
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
+        EC2_URL = ''
     }
     stages {
         stage('Install Dependencies in venv') {
@@ -155,6 +156,27 @@ pipeline {
                     sh 'docker push borhom11/meatshop-backend:$GIT_COMMIT'
                 }
             }   
+        }
+
+        stage('Integration Testing - GET AWS EC2 URL') {
+            when {
+                branch "feature/*"
+            }
+            steps {
+                withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
+                    script {
+                        def url = sh(script: 'bash ./integration-testing-ec2.sh', returnStdout: true).trim()
+                        env.EC2_URL = url
+                        echo "EC2 Instance URL: ${env.EC2_URL}"
+                    }
+                }
+            }
+        }
+
+        stage('Testing URL') {
+            steps {
+                sh 'echo $URL'
+            }
         }
 
     }
