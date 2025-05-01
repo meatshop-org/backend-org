@@ -161,6 +161,7 @@ pipeline {
                     sshagent(['aws-dev-deploy-ec2-instance']) {
                         sh """
                             ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 '
+                                sudo docker image prune -a -f
                                 sudo docker network create meatshop-net
                                 sudo docker rm -f \$(sudo docker ps -q)
                                 if docker ps -a | grep -q "mymysql"; then
