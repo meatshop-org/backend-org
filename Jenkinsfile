@@ -10,7 +10,6 @@ pipeline {
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
-        EC2_URL = ''
     }
     stages {
         stage('Install Dependencies in venv') {
@@ -158,30 +157,104 @@ pipeline {
             }   
         }
 
-        stage('Integration Testing - GET AWS EC2 URL') {
+        stage('Integration Testing - AWS EC2') {
             when {
                 branch "feature/*"
             }
             steps {
                 withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
-                    script {
-                        def url = sh(script: 'bash ./integration-testing-ec2.sh', returnStdout: true).trim()
-                        env.EC2_URL = url
-                        echo "EC2 Instance URL: ${env.EC2_URL}"
-                    }
+                    sh '''
+                        bash integration-testing-ec2.sh
+                    '''
                 }
             }
         }
 
-        stage('Testing URL') {
+        stage('Deploy - AWS EC2') {
+            when {
+                branch 'feature/*'
+            }
             steps {
-                sh 'echo $URL'
+                script {
+                    sshagent(['aws-dev-deploy-ec2-instance']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 '
+                                sudo docker network create meatshop-net
+                                sudo docker rm -f \$(sudo docker ps -q)
+                                if docker ps -a | grep -q "mymysql"; then
+                                    echo "Container Found, Stopping..."
+                                    docker stop "mymysql" && docker rm "mymysql"
+                                    echo "Container stopped and removed"
+                                fi
+                                docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
+
+                                if sudo docker ps -a | grep -q "backend"; then
+                                    echo "Container Found, Stopping..."
+                                    sudo docker stop "backend" && sudo docker rm "backend"
+                                    echo "Container stopped and removed"
+                                fi
+                                sudo docker run -d \
+                                    --network meatshop-net \
+                                    -e DB_NAME=${DB_NAME} \
+                                    -e DB_PORT=${DB_PORT} \
+                                    -e LOCAL_DB_HOST=mymysql \
+                                    -e LOCAL_DB_USER=${LOCAL_DB_USER} \
+                                    -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
+                                    -p 80:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
+                            '
+                        """
+                    }
+                }
+            }   
+        }
+
+         stage('K8S Update Image Tag') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                sh 'git clone -b main https://github.com/BRHM1/k8s-meatshop.git'
+                dir('k8s-meatshop/backend') {
+                    sh '''
+                        git checkout main
+                        git checkout -b feature-$BUILD_ID
+                        sed -E -i 's~(eladwy|borhom11)/[^ ]*~borhom11/meatshop-backend:$GIT_COMMIT~g' deployment.yaml
+
+                        git config --global user.email $USER_EMAIL
+                        git remote set-url origin https://$GITHUB_TOKEN@github.com/BRHM1/k8s-meatshop.git
+                        git add . 
+                        git commit -m "FROM CI/CD - Update image tag to $GIT_COMMIT"
+                        git push origin feature-$BUILD_ID
+                    '''
+                }
+            }
+        }
+
+        stage('K8S Raise PR Review') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                sh '''
+                    curl -L \
+                        -X POST \
+                        -H "Accept: application/vnd.github+json" \
+                        -H "Authorization: Bearer $FGGITHUB_TOKEN" \
+                        -H "X-GitHub-Api-Version: 2022-11-28" \
+                        https://api.github.com/repos/BRHM1/k8s-meatshop/pulls \
+                        -d '{"title":"Raised PR From CI/CD","body":"Please pull these awesome changes in!","head":"feature-'"$BUILD_ID"'","base":"main"}'
+                '''
             }
         }
 
     }
     post {
             always {
+                script {
+                    if (fileExists('k8s-meatshop')) {
+                        sh 'rm -rf k8s-meatshop'
+                    }
+                }
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-MEDIUM-results.xml'
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-CRITICAL-results.xml'
 
