@@ -179,7 +179,8 @@ pipeline {
         stage('Testing URL') {
             steps {
                 sh 'echo $env.EC2_URL'
-                sh 'echo ${env.EC2_URL}'
+                sh 'echo "$env.EC2_URL"'
+                sh 'echo "${env.EC2_URL}"'
             }
         }
 
