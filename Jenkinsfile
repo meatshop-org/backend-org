@@ -10,7 +10,6 @@ pipeline {
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
-        EC2_URL = null
     }
     stages {
         stage('Install Dependencies in venv') {
@@ -159,28 +158,52 @@ pipeline {
             }   
         }
 
-        stage('Integration Testing - GET AWS EC2 URL') {
+        stage('Integration Testing - AWS EC2') {
             when {
                 branch "feature/*"
             }
             steps {
                 withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
-                    script {
-                        def fullOutput = sh(script: 'bash integration-testing-ec2.sh', returnStdout: true)
-                        def url = fullOutput.trim().split('\n')[-1]
-                        env.EC2_URL = 'ahmedibrahiem'
-                        echo "Local: ${url}"
-                        echo "Global: ${env.EC2_URL}"
-                    }
+                    sh '''
+                        bash integration-testing-ec2.sh
+                    '''
                 }
             }
         }
 
-        stage('Testing URL') {
-            steps {
-               sh "echo 'EC2_URL (Groovy): ${env.EC2_URL}'"
-               sh 'echo "EC2_URL (Shell): $EC2_URL"'
+        stage('Deploy - AWS EC2') {
+            when {
+                branch 'feature/*'
             }
+            steps {
+                script {
+                    sshagent(['aws-dev-deploy-ec2-instance']) {
+                        sh '''
+                            ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 "
+                                if sudo docker ps -a | grep -q "backend"; then
+                                    echo "Container Found, Stopping..."
+                                    sudo docker stop "backend" && sudo docker rm "backend"
+                                    echo "Container stopped and removed"
+                                fi
+                                sudo docker run -d \
+                                    --network meatshop-net \
+                                    -e DB_NAME=${DB_NAME} \
+                                    -e DB_PORT=${DB_PORT} \
+                                    -e LOCAL_DB_HOST=mymysql \
+                                    -e LOCAL_DB_USER=${LOCAL_DB_USER} \
+                                    -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
+                                    -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
+                                if sudo docker ps -a | grep -q "meatshop-backend"; then
+                                    echo "Container Found, Stopping..."
+                                    sudo docker stop "meatshop-backend" && sudo docker rm "meatshop-backend"
+                                    echo "Container stopped and removed"
+                                fi
+                                sudo docker run --name meatshop-backend -p 80:80 -d borhom11/meatshop-backend:$GIT_COMMIT
+                            "
+                        '''
+                    }
+                }
+            }   
         }
 
     }
