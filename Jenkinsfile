@@ -177,10 +177,10 @@ pipeline {
             steps {
                 script {
                     sshagent(['aws-dev-deploy-ec2-instance']) {
-                        sh '''
-                            ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 "
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 '
                                 sudo docker network create meatshop-net
-                                sudo docker rm -f $(sudo docker ps -q)
+                                sudo docker rm -f \$(sudo docker ps -q)
                                 if docker ps -a | grep -q "mymysql"; then
                                     echo "Container Found, Stopping..."
                                     docker stop "mymysql" && docker rm "mymysql"
@@ -201,8 +201,8 @@ pipeline {
                                     -e LOCAL_DB_USER=${LOCAL_DB_USER} \
                                     -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
                                     -p 80:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
-                            "
-                        '''
+                            '
+                        """
                     }
                 }
             }   
