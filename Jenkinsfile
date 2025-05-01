@@ -166,7 +166,8 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
                     script {
-                        def url = sh(script: 'bash integration-testing-ec2.sh', returnStdout: true).trim()
+                        def fullOutput = sh(script: 'bash integration-testing-ec2.sh', returnStdout: true)
+                        def url = fullOutput.trim().split('\n')[-1]
                         env.EC2_URL = url
                         echo "Local: ${url}"
                         echo "Global: ${env.EC2_URL}"
