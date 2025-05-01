@@ -46,7 +46,7 @@ pipeline {
                             docker stop "mymysql" && docker rm "mymysql"
                             echo "Container stopped and removed"
                         fi
-                        docker run -d --name mymysql -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
+                        docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
                     '''
                 }
             }
@@ -98,9 +98,10 @@ pipeline {
                             echo "Container stopped and removed"
                         fi
                         docker run -d \
+                            --network meatshop-net \
                             -e DB_NAME=${DB_NAME} \
                             -e DB_PORT=${DB_PORT} \
-                            -e LOCAL_DB_HOST=${LOCAL_DB_HOST} \
+                            -e LOCAL_DB_HOST=mymysql \
                             -e LOCAL_DB_USER=${LOCAL_DB_USER} \
                             -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
                             -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
