@@ -97,15 +97,65 @@ pipeline {
                             docker stop "backend" && docker rm "backend"
                             echo "Container stopped and removed"
                         fi
-                        docker run -d -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
+                        docker run -d \
+                            -e DB_NAME=${DB_NAME} \
+                            -e DB_PORT=${DB_PORT} \
+                            -e LOCAL_DB_HOST=${LOCAL_DB_HOST} \ 
+                            -e LOCAL_DB_USER=${LOCAL_DB_USER} \
+                            -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \ 
+                            -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
                     '''
                 }
             }
         }
+        // stage('Trivy Vulnarability Scanner'){
+        //     steps {
+        //         sh '''
+        //             trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+        //                 --severity LOW,MEDIUM \
+        //                 --exit-code 0 \
+        //                 --quiet \
+        //                 --format json -o trivy-image-MEDIUM-results.json
+    
+        //              trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+        //                 --severity HIGH,CRITICAL \
+        //                 --exit-code 1 \
+        //                 --quiet \
+        //                 --format json -o trivy-image-CRITICAL-results.json
+        //         '''
+        //     }
+        //     post {
+        //         always {
+        //             sh '''
+        //                 trivy convert \
+        //                     --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //                     --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json
+                            
+        //                 trivy convert \
+        //                     --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+        //                     --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+                            
+        //                 trivy convert \
+        //                     --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+        //                     --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json
+                            
+        //                 trivy convert \
+        //                     --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+        //                     --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
+        //             '''
+        //         }
+        //     }
+        // }
 
     }
     post {
             always {
+                // junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-MEDIUM-results.xml'
+                // junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-CRITICAL-results.xml'
+
+                // publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, icon: '', keepAll: true, reportDir: './', reportFiles: 'trivy-image-MEDIUM-results.html', reportName: 'Trivy Image Medium vulnarability Report', reportTitles: '', useWrapperFileDirectly: true])
+                // publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, icon: '', keepAll: true, reportDir: './', reportFiles: 'trivy-image-CRITICAL-results.html', reportName: 'Trivy Image CRITICAL vulnarability Report', reportTitles: '', useWrapperFileDirectly: true])
+
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
             }
         }
