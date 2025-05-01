@@ -10,7 +10,7 @@ pipeline {
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
-        EC2_URL = ''
+        EC2_URL = null
     }
     stages {
         stage('Install Dependencies in venv') {
@@ -178,9 +178,8 @@ pipeline {
 
         stage('Testing URL') {
             steps {
-                sh 'echo $env.EC2_URL'
-                sh 'echo "$env.EC2_URL"'
-                sh 'echo "${env.EC2_URL}"'
+               sh "echo 'EC2_URL (Groovy): ${env.EC2_URL}'"
+               sh 'echo "EC2_URL (Shell): $EC2_URL"'
             }
         }
 
