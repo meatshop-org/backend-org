@@ -218,7 +218,7 @@ pipeline {
                     sh '''
                         git checkout main
                         git checkout -b feature-$BUILD_ID
-                        sed -E -i 's~(eladwy|borhom11)/[^ ]*~borhom11/meatshop-backend:$GIT_COMMIT~g' deployment.yaml
+                        sed -E -i "s~(eladwy|borhom11)/[^ ]*~borhom11/meatshop-backend:$GIT_COMMIT~g" deployment.yaml
 
                         git config --global user.email $USER_EMAIL
                         git remote set-url origin https://$GITHUB_TOKEN@github.com/BRHM1/k8s-meatshop.git
