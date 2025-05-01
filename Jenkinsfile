@@ -176,7 +176,7 @@ pipeline {
 
         stage('Testing URL') {
             steps {
-                sh 'echo $URL'
+                sh 'echo $EC2_URL'
             }
         }
 
