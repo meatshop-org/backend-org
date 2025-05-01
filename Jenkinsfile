@@ -168,7 +168,7 @@ pipeline {
                     script {
                         def fullOutput = sh(script: 'bash integration-testing-ec2.sh', returnStdout: true)
                         def url = fullOutput.trim().split('\n')[-1]
-                        env.EC2_URL = url
+                        env.EC2_URL = 'ahmedibrahiem'
                         echo "Local: ${url}"
                         echo "Global: ${env.EC2_URL}"
                     }
