@@ -54,19 +54,19 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                  sh ''' 
-		     sleep 60
-                     . venv/bin/activate
-                     python3.11 manage.py test --no-input --failfast
+		            sleep 60
+                    . venv/bin/activate
+                    python3.11 manage.py test --no-input --failfast
                 '''
             }
         }
         stage('Code Coverage') {
             steps {
                  sh ''' 
-		     sleep 60
-                     . venv/bin/activate
-                     coverage run --source='.' manage.py test --no-input --failfast
-		     coverage xml -o coverage.xml
+		            sleep 60
+                    . venv/bin/activate
+                    coverage run --source='.' manage.py test --no-input --failfast
+		            coverage xml -o coverage.xml
                 '''
             }
         }  
@@ -78,13 +78,18 @@ pipeline {
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
                               -Dsonar.projectKey=backend-project \
                               -Dsonar.sources=tags/,shop/,meatshop/,likes/,core/ \
-			      -Dsonar.python.coverage.reportPaths=coverage.xml
+			                  -Dsonar.python.coverage.reportPaths=coverage.xml
                          '''
                     }
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         waitForQualityGate abortPipeline: true
                     }
                 }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
             }
         }
 

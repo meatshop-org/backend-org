@@ -1,1 +1,12 @@
 .env
+**
+!core/
+!likes/
+!shop/
+!meatshop/
+!tags/
+!db.sqlite3
+!manage.py
+!Pipfile
+!Pipfile.lock
+!requirements.txt
