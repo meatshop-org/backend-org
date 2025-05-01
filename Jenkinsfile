@@ -42,6 +42,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        echo Hello
                         if docker ps -a | grep -q "mymysql"; then
                             echo "Container Found, Stopping..."
                             docker stop "mymysql" && docker rm "mymysql"
