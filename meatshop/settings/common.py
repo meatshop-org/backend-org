@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'likes',
     'core',
     'storages',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -75,6 +76,35 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Books API',
+    'DESCRIPTION': 'Your bookish project description',
+    'VERSION': '0.1.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'OAS_VERSION': '3.1.0',
+    "SERVERS": [
+        {
+            "url": "http://127.0.0.1:8000/",
+            "description": "Development server",
+        },
+    ],
+    # OTHER SETTINGS
+    'EXTENSIONS_INFO': {
+        'x-speakeasy-retries': {
+            'strategy': 'backoff',
+            'backoff': {
+                'initialInterval': 500,
+                'maxInterval': 60000,
+                'maxElapsedTime': 3600000,
+                'exponent': 1.5,
+            },
+            'statusCodes': ['5XX'],
+            'retryConnectionErrors': True,
+        },
+    },
 }
 
 SIMPLE_JWT = {

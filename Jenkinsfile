@@ -10,6 +10,7 @@ pipeline {
         LOCAL_DB_USER = 'root'
         LOCAL_DB_PASSWORD = 'mypass'
         DB_PORT = '3306'
+        RUNNING_BACKEND = 'http://ec2-157-175-219-194.me-south-1.compute.amazonaws.com/'
     }
     stages {
         stage('Install Dependencies in venv') {
@@ -20,10 +21,8 @@ pipeline {
                     python -m pip install --upgrade pip
                     pip install -r requirements.txt
                     python3.11 -m pip install pip-audit
-                    python3.11 -m pip install safety
-                    python3.11 -m pip install safety auth
-                    python3.11 -m pip install yq
                     python3.11 -m pip install coverage
+                    python3.11 -m pip install drf-spectacular
                 '''
             }
         }
@@ -90,23 +89,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
-                // script {
-                //     sh '''
-                //         if docker ps -a | grep -q "backend"; then
-                //             echo "Container Found, Stopping..."
-                //             docker stop "backend" && docker rm "backend"
-                //             echo "Container stopped and removed"
-                //         fi
-                //         docker run -d \
-                //             --network meatshop-net \
-                //             -e DB_NAME=${DB_NAME} \
-                //             -e DB_PORT=${DB_PORT} \
-                //             -e LOCAL_DB_HOST=mymysql \
-                //             -e LOCAL_DB_USER=${LOCAL_DB_USER} \
-                //             -e LOCAL_DB_PASSWORD=${LOCAL_DB_PASSWORD} \
-                //             -p 8089:8000 --name backend borhom11/meatshop-backend:$GIT_COMMIT
-                //     '''
-                // }
             }
         }
         stage('Trivy Vulnarability Scanner'){
@@ -247,6 +229,35 @@ pipeline {
             }
         }
 
+        stage('DB Migrated?'){
+            when {
+                branch 'PR*'
+            }
+            steps {
+                timeout(time: 1, unit: 'DAYS'){
+                    input message: 'Did you ran python manage.py makemigrations?', ok: 'YES! All Done'
+                }
+            }
+        }
+
+        stage('DAST - OWASP ZAP') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                sh '''
+                    chmod 777 $(pwd)
+                    docker run -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+                        -t http://ec2-157-175-219-194.me-south-1.compute.amazonaws.com/schema/?format=json \
+                        -r zap_report.html \
+                        -f openapi \
+                        -w zap_report.md \
+                        -x zap_report.xml \
+                        -J zap_report.json 
+                '''
+            }
+        }
+
     }
     post {
             always {
@@ -260,7 +271,7 @@ pipeline {
 
                 publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, icon: '', keepAll: true, reportDir: './', reportFiles: 'trivy-image-MEDIUM-results.html', reportName: 'Trivy Image Medium vulnarability Report', reportTitles: '', useWrapperFileDirectly: true])
                 publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, icon: '', keepAll: true, reportDir: './', reportFiles: 'trivy-image-CRITICAL-results.html', reportName: 'Trivy Image CRITICAL vulnarability Report', reportTitles: '', useWrapperFileDirectly: true])
-
+                publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, icon: '', keepAll: true, reportDir: './', reportFiles: 'zap_report.html', reportName: 'DAST - OWASP ZAP Report', reportTitles: '', useWrapperFileDirectly: true])
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'pip-audit-report.txt', followSymlinks: false
             }
         }
