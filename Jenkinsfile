@@ -208,9 +208,53 @@ pipeline {
             }   
         }
 
+         stage('K8S Update Image Tag') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                sh 'git clone -b main https://github.com/BRHM1/k8s-meatshop.git'
+                dir('k8s-meatshop/backend') {
+                    sh '''
+                        git checkout main
+                        git checkout -b feature-$BUILD_ID
+                        sed -E -i 's~(eladwy|borhom11)/[^ ]*~borhom11/meatshop-backend:$GIT_COMMIT~g' deployment.yaml
+
+                        git config --global user.email $USER_EMAIL
+                        git remote set-url origin https://$GITHUB_TOKEN@github.com/BRHM1/k8s-meatshop.git
+                        git add . 
+                        git commit -m "FROM CI/CD - Update image tag to $GIT_COMMIT"
+                        git push origin feature-$BUILD_ID
+                    '''
+                }
+            }
+        }
+
+        stage('K8S Raise PR Review') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                sh '''
+                    curl -L \
+                        -X POST \
+                        -H "Accept: application/vnd.github+json" \
+                        -H "Authorization: Bearer $FGGITHUB_TOKEN" \
+                        -H "X-GitHub-Api-Version: 2022-11-28" \
+                        https://api.github.com/repos/BRHM1/k8s-meatshop/pulls \
+                        -d '{"title":"Raised PR From CI/CD","body":"Please pull these awesome changes in!","head":"feature-'"$BUILD_ID"'","base":"main"}'
+                '''
+            }
+        }
+
     }
     post {
             always {
+                script {
+                    if (fileExists('k8s-meatshop')) {
+                        sh 'rm -rf k8s-meatshop'
+                    }
+                }
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-MEDIUM-results.xml'
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'trivy-image-CRITICAL-results.xml'
 
