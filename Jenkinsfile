@@ -263,7 +263,6 @@ pipeline {
                 withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
                     sh '''
                         mkdir reports-$BUILD_ID
-                        echo reports
                         cp coverage.xml reports-$BUILD_ID/
                         cp trivy*.* reports-$BUILD_ID/
                         cp pip-* reports-$BUILD_ID/
