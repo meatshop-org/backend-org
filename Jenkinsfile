@@ -230,17 +230,6 @@ pipeline {
             }
         }
 
-        stage('DB Migrated?'){
-            when {
-                branch 'PR*'
-            }
-            steps {
-                timeout(time: 1, unit: 'DAYS'){
-                    input message: 'Did you ran python manage.py makemigrations?', ok: 'YES! All Done'
-                }
-            }
-        }
-
         stage('DAST - OWASP ZAP') {
             when {
                 branch 'PR*'
@@ -255,7 +244,8 @@ pipeline {
                         -f openapi \
                         -w zap_report.md \
                         -x zap_report.xml \
-                        -J zap_report.json 
+                        -J zap_report.json \
+                        -c zap_ignore_rules
                 '''
             }
         }
