@@ -262,7 +262,6 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
                     sh '''
-                        echo Trigger
                         mkdir reports-$BUILD_ID
                         cp coverage.xml reports-$BUILD_ID/
                         cp trivy*.* reports-$BUILD_ID/
