@@ -229,8 +229,10 @@ pipeline {
             when {
                 branch 'PR*'
             }
-            timeout(time: 1, unit: 'DAYS') {
-                input message: 'Confirm that the manifest repo PR is merged and ArgoCD is synced.', ok: 'YES! All Done', submitter: 'admin'
+            steps{
+                timeout(time: 1, unit: 'DAYS') {
+                    input message: 'Confirm that the manifest repo PR is merged and ArgoCD is synced.', ok: 'YES! All Done', submitter: 'admin'
+                }
             }
         }
         stage('DAST - OWASP ZAP') {
