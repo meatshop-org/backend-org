@@ -138,7 +138,6 @@ pipeline {
                 }
             }   
         }
-
         stage('Integration Testing - AWS EC2') {
             when {
                 branch "feature/*"
@@ -151,7 +150,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy - AWS EC2') {
             when {
                 branch 'feature/*'
@@ -190,7 +188,6 @@ pipeline {
                 }
             }   
         }
-
          stage('K8S Update Image Tag') {
             when {
                 branch 'PR*'
@@ -212,7 +209,6 @@ pipeline {
                 }
             }
         }
-
         stage('K8S Raise PR Review') {
             when {
                 branch 'PR*'
@@ -229,7 +225,14 @@ pipeline {
                 '''
             }
         }
-
+        stage('PR merged & ArgoCD synced?') {
+            when {
+                branch 'PR*'
+            }
+            timeout(time: 1, unit: 'DAYS') {
+                input message: 'Confirm that the manifest repo PR is merged and ArgoCD is synced.', ok: 'YES! All Done', submitter: 'admin'
+            }
+        }
         stage('DAST - OWASP ZAP') {
             when {
                 branch 'PR*'
@@ -247,6 +250,28 @@ pipeline {
                         -J zap_report.json \
                         -c zap_ignore_rules
                 '''
+            }
+        }
+
+        stage('Publish Reports - AWS S3') {
+            when {
+                branch 'PR*'
+            }
+            steps {
+                withAWS(credentials: 'aws-s3-ec2-lambda-creds', region: 'me-south-1') {
+                    sh '''
+                        mkdir reports-$BUILD_ID
+                        cp coverage.xml reports-$BUILD_ID/
+                        cp trivy*.* reports-$BUILD_ID/
+                        cp pip-* reports-$BUILD_ID/
+                        ls reports-$BUILD_ID/
+                    '''
+                    s3Upload(
+                        file: "reports-$BUILD_ID",
+                        bucket: "meatshop-pipeline-reports",
+                        path: "backend/reports-$BUILD_ID"
+                    )
+                }
             }
         }
 
