@@ -247,6 +247,7 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo Trigger
                     chmod 777 $(pwd)
                     docker run -v $(pwd):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
                         -t http://ec2-157-175-219-194.me-south-1.compute.amazonaws.com/schema/?format=json \
