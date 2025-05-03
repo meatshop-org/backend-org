@@ -100,63 +100,60 @@ pipeline {
             }
         }
 
-        stage('Docker Image Management') {
-            failFast false
-            stages {
-                stage('Build Docker Image') {
-                    steps {
-                        sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
-                    }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
+            }
+        }
+        stage('Trivy Vulnarability Scanner'){
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh '''
+                        trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+                            --severity LOW,MEDIUM \
+                            --exit-code 0 \
+                            --quiet \
+                            --format json -o trivy-image-MEDIUM-results.json
+        
+                        trivy image borhom11/meatshop-backend:$GIT_COMMIT \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 1 \
+                            --quiet \
+                            --format json -o trivy-image-CRITICAL-results.json
+                    '''
                 }
-                stage('Trivy Vulnarability Scanner'){
-                    steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            sh '''
-                                trivy image borhom11/meatshop-backend:$GIT_COMMIT \
-                                    --severity LOW,MEDIUM \
-                                    --exit-code 0 \
-                                    --quiet \
-                                    --format json -o trivy-image-MEDIUM-results.json
-                
-                                trivy image borhom11/meatshop-backend:$GIT_COMMIT \
-                                    --severity HIGH,CRITICAL \
-                                    --exit-code 1 \
-                                    --quiet \
-                                    --format json -o trivy-image-CRITICAL-results.json
-                            '''
-                        }
-                    }
-                    post {
-                        always {
-                            sh '''
-                                trivy convert \
-                                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                                    --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json
-                                    
-                                trivy convert \
-                                    --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-                                    --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
-                                    
-                                trivy convert \
-                                    --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
-                                    --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json
-                                    
-                                trivy convert \
-                                    --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
-                                    --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
-                            '''
-                        }
-                    }
-                }
-                stage('Push Docker Image') {
-                    steps {
-                        withDockerRegistry(url: 'https://index.docker.io/v1/', credentialsId: 'docker-hub-creds') {
-                            sh 'docker push borhom11/meatshop-backend:$GIT_COMMIT'
-                        }
-                    }   
+            }
+            post {
+                always {
+                    sh '''
+                        trivy convert \
+                            --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+                            --output trivy-image-MEDIUM-results.html trivy-image-MEDIUM-results.json
+                            
+                        trivy convert \
+                            --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+                            --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+                            
+                        trivy convert \
+                            --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+                            --output trivy-image-MEDIUM-results.xml trivy-image-MEDIUM-results.json
+                            
+                        trivy convert \
+                            --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+                            --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
+                    '''
                 }
             }
         }
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry(url: 'https://index.docker.io/v1/', credentialsId: 'docker-hub-creds') {
+                    sh 'docker push borhom11/meatshop-backend:$GIT_COMMIT'
+                }
+            }   
+        }
+
         
         stage('Integration Testing - AWS EC2') {
             when {
