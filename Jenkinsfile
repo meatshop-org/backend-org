@@ -59,11 +59,10 @@ pipeline {
 
         stage('Testing & Coverage') {
             failFast false // Allows both stages to complete before failing.
-            stages {
+            parallel {
                 stage('Run Unit Tests') {
                     steps {
                         sh ''' 
-                            sleep 60
                             . venv/bin/activate
                             python3.11 manage.py test --no-input --failfast
                         '''
