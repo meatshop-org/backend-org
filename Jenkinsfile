@@ -13,39 +13,45 @@ pipeline {
         RUNNING_BACKEND = 'http://ec2-157-175-219-194.me-south-1.compute.amazonaws.com/'
     }
     stages {
-        stage('Install Dependencies in venv') {
-            steps {
-                sh '''
-                    python3.11 -m venv venv
-                    . venv/bin/activate
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt
-                    python3.11 -m pip install pip-audit
-                    python3.11 -m pip install coverage
-                    python3.11 -m pip install drf-spectacular
-                '''
+        stage('Environment Setup') {
+            parallel {
+                stage('Install Dependencies') {
+                    steps {
+                        sh '''
+                            python3.11 -m venv venv
+                            . venv/bin/activate
+                            python -m pip install --upgrade pip
+                            pip install -r requirements.txt
+                            python3.11 -m pip install pip-audit
+                            python3.11 -m pip install coverage
+                            python3.11 -m pip install drf-spectacular
+                        '''
+                    }
+                }
+
+                stage('Start Database') {
+                    steps {
+                        script {
+                            sh '''
+                                if docker ps -a | grep -q "mymysql"; then
+                                    echo "Container Found, Stopping..."
+                                    docker stop "mymysql" && docker rm "mymysql"
+                                    echo "Container stopped and removed"
+                                fi
+                                docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
+                            '''
+                        }
+                    }
+                }
             }
         }
+        
         stage('Audit Dependencies') {
             steps {
                  catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh '''
                         . venv/bin/activate
                         pip-audit > pip-audit-report.txt
-                    '''
-                }
-            }
-        }
-        stage('Run DB') {
-            steps {
-                script {
-                    sh '''
-                        if docker ps -a | grep -q "mymysql"; then
-                            echo "Container Found, Stopping..."
-                            docker stop "mymysql" && docker rm "mymysql"
-                            echo "Container stopped and removed"
-                        fi
-                        docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
                     '''
                 }
             }
