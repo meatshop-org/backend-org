@@ -56,25 +56,33 @@ pipeline {
                 }
             }
         }
-        stage('Run Unit Tests') {
-            steps {
-                 sh ''' 
-		            sleep 60
-                    . venv/bin/activate
-                    python3.11 manage.py test --no-input --failfast
-                '''
+
+        stage('Testing & Coverage') {
+            failFast false // Allows both stages to complete before failing.
+            parallel {
+                stage('Run Unit Tests') {
+                    steps {
+                        sh ''' 
+                            sleep 60
+                            . venv/bin/activate
+                            python3.11 manage.py test --no-input --failfast
+                        '''
+                    }
+                }
+
+                stage('Generate Coverage') {
+                    steps {
+                        sh ''' 
+                            sleep 60
+                            . venv/bin/activate
+                            coverage run --source='.' manage.py test --no-input --failfast
+                            coverage xml -o coverage.xml
+                        '''
+                    }
+                }
             }
         }
-        stage('Code Coverage') {
-            steps {
-                 sh ''' 
-		            sleep 60
-                    . venv/bin/activate
-                    coverage run --source='.' manage.py test --no-input --failfast
-		            coverage xml -o coverage.xml
-                '''
-            }
-        }  
+          
         stage('SAST - SonarQube') {
             steps {
                 timeout(time: 540, unit: 'SECONDS'){
@@ -92,6 +100,10 @@ pipeline {
                 }
             }
         }
+
+        // stage('Docker Image Management') {
+
+        // }
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
