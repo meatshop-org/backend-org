@@ -13,19 +13,39 @@ pipeline {
         RUNNING_BACKEND = 'http://ec2-157-175-219-194.me-south-1.compute.amazonaws.com/'
     }
     stages {
-        stage('Install Dependencies in venv') {
-            steps {
-                sh '''
-                    python3.11 -m venv venv
-                    . venv/bin/activate
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt
-                    python3.11 -m pip install pip-audit
-                    python3.11 -m pip install coverage
-                    python3.11 -m pip install drf-spectacular
-                '''
+        stage('Environment Setup') {
+            parallel {
+                stage('Install Dependencies') {
+                    steps {
+                        sh '''
+                            python3.11 -m venv venv
+                            . venv/bin/activate
+                            python -m pip install --upgrade pip
+                            pip install -r requirements.txt
+                            python3.11 -m pip install pip-audit
+                            python3.11 -m pip install coverage
+                            python3.11 -m pip install drf-spectacular
+                        '''
+                    }
+                }
+
+                stage('Start Database') {
+                    steps {
+                        script {
+                            sh '''
+                                if docker ps -a | grep -q "mymysql"; then
+                                    echo "Container Found, Stopping..."
+                                    docker stop "mymysql" && docker rm "mymysql"
+                                    echo "Container stopped and removed"
+                                fi
+                                docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
+                            '''
+                        }
+                    }
+                }
             }
         }
+        
         stage('Audit Dependencies') {
             steps {
                  catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -36,39 +56,32 @@ pipeline {
                 }
             }
         }
-        stage('Run DB') {
-            steps {
-                script {
-                    sh '''
-                        if docker ps -a | grep -q "mymysql"; then
-                            echo "Container Found, Stopping..."
-                            docker stop "mymysql" && docker rm "mymysql"
-                            echo "Container stopped and removed"
-                        fi
-                        docker run -d --name mymysql --network meatshop-net -e MYSQL_ROOT_PASSWORD=mypass -e MYSQL_DATABASE=meatshop -p 3306:3306 -v mysql_data:/var/lib/mysql mysql
-                    '''
+
+        stage('Testing & Coverage') {
+            failFast false // Allows both stages to complete before failing.
+            parallel {
+                stage('Run Unit Tests') {
+                    steps {
+                        sh ''' 
+                            . venv/bin/activate
+                            python3.11 manage.py test --no-input --failfast
+                        '''
+                    }
+                }
+
+                stage('Generate Coverage') {
+                    steps {
+                        sh ''' 
+                            sleep 60
+                            . venv/bin/activate
+                            coverage run --source='.' manage.py test --no-input --failfast
+                            coverage xml -o coverage.xml
+                        '''
+                    }
                 }
             }
         }
-        stage('Run Unit Tests') {
-            steps {
-                 sh ''' 
-		            sleep 60
-                    . venv/bin/activate
-                    python3.11 manage.py test --no-input --failfast
-                '''
-            }
-        }
-        stage('Code Coverage') {
-            steps {
-                 sh ''' 
-		            sleep 60
-                    . venv/bin/activate
-                    coverage run --source='.' manage.py test --no-input --failfast
-		            coverage xml -o coverage.xml
-                '''
-            }
-        }  
+          
         stage('SAST - SonarQube') {
             steps {
                 timeout(time: 540, unit: 'SECONDS'){
@@ -76,7 +89,7 @@ pipeline {
                         sh '''
                             $SONAR_SCANNER_HOME/bin/sonar-scanner \
                               -Dsonar.projectKey=backend-project \
-                              -Dsonar.sources=tags/,shop/,meatshop/,likes/,core/ \
+                              -Dsonar.sources=tags/,shop/,meatshop/,likes/,core/,Dockerfile \
 			                  -Dsonar.python.coverage.reportPaths=coverage.xml
                          '''
                     }
@@ -86,6 +99,8 @@ pipeline {
                 }
             }
         }
+
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t borhom11/meatshop-backend:$GIT_COMMIT .'
@@ -138,6 +153,7 @@ pipeline {
                 }
             }   
         }
+        
         stage('Integration Testing - AWS EC2') {
             when {
                 branch "feature/*"
@@ -158,7 +174,7 @@ pipeline {
                 script {
                     sshagent(['aws-dev-deploy-ec2-instance']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no ubuntu@157.175.219.194 '
+                            ssh -o StrictHostKeyChecking=no ubuntu@16.24.154.180 '
                                 sudo docker image prune -a -f
                                 sudo docker network create meatshop-net
                                 sudo docker rm -f \$(sudo docker ps -q)
