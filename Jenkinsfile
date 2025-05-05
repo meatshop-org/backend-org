@@ -51,6 +51,7 @@ pipeline {
                  catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh '''
                         . venv/bin/activate
+                        pip show setuptools
                         pip-audit > pip-audit-report.txt
                     '''
                 }
