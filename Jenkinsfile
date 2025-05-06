@@ -50,6 +50,7 @@ pipeline {
             steps {
                  catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh '''
+                        echo Empty
                         . venv/bin/activate
                         pip show setuptools
                         pip-audit > pip-audit-report.txt
