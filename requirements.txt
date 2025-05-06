@@ -42,3 +42,4 @@ uvicorn==0.34.0
 waitress==3.0.2
 whitenoise==6.9.0
 drf-spectacular==0.28.0
+setuptools>=65.5.1

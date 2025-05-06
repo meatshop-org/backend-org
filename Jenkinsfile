@@ -73,7 +73,7 @@ pipeline {
                 stage('Generate Coverage') {
                     steps {
                         sh ''' 
-                            sleep 60
+                            sleep 20
                             . venv/bin/activate
                             coverage run --source='.' manage.py test --no-input --failfast
                             coverage xml -o coverage.xml
